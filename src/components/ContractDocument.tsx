@@ -6,23 +6,48 @@ interface ContractDocumentProps {
   document: ContractDocumentType;
 }
 
+const getClauseIndicator = (number: number, level: number): string => {
+  // For level 1, convert number to lowercase letter (1 -> 'a', 2 -> 'b', etc)
+  if (level === 1) {
+    const letter = String.fromCharCode(97 + (number - 1)); // 97 is ASCII for 'a'
+    return `(${letter}) `;
+  }
+  return `${number}. `;
+};
+
 export const ContractDocument: React.FC<ContractDocumentProps> = ({ document }) => {
   const processedDocument = useMemo(() => {
     const doc = { ...document };
-    let currentNumber = 1;
 
-    const traverse = (node: ContractNode) => {
+
+    const traverse = (node: ContractNode, clauseLevel: number, currentNumber: number) => {
       if ('type' in node && node.type === 'clause') {
         const clauseNode = node as ClauseNode;
-        clauseNode.number = currentNumber++;
+        currentNumber++
+        clauseNode.clauseIndicator = getClauseIndicator(currentNumber, clauseLevel);
+
+        if ('children' in node && node.children) {
+          let childNumber = 0;
+          for (const child of node.children) {
+            childNumber = traverse(child, clauseLevel + 1, childNumber);
+          }
+        }
+      } else {
+        if ('children' in node && node.children) {
+          for (const child of node.children) {
+            currentNumber = traverse(child, clauseLevel, currentNumber);
+          }
+        }
       }
-      if ('children' in node && node.children) {
-        node.children.forEach(traverse);
-      }
+      
+      return currentNumber;
     };
 
     if (doc.children) {
-      doc.children.forEach(traverse);
+      let currentNumber = 0;
+      for (const child of doc.children) {
+        currentNumber = traverse(child, 0, currentNumber);
+      }
     }
     return doc;
   }, [document]);

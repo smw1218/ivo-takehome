@@ -27,6 +27,7 @@ export interface ClauseNode {
   title?: string;
   children: ContractNode[];
   number?: number;
+  clauseIndicator?: string;
 }
 
 export interface BlockNode {

@@ -6,18 +6,25 @@ import { processText } from '../utils/textProcessing';
 
 interface ContractNodeRendererProps {
   node: ContractNode;
+  key: number;
+  clauseIndicator?: string;
 }
 
-export const ContractNodeRenderer: React.FC<ContractNodeRendererProps> = ({ node }) => {
+export const ContractNodeRenderer: React.FC<ContractNodeRendererProps> = ({ node, clauseIndicator }) => {
+
   if ('text' in node) {
     const textNode = node as TextNode;
+
     return (
+      <>
+      { clauseIndicator && <span>{clauseIndicator}</span> }
       <span
         className={`${textNode.bold ? 'font-bold' : ''} ${
           textNode.italic ? 'italic' : ''
         } ${textNode.underline ? 'underline' : ''}`}
         dangerouslySetInnerHTML={{ __html: processText(textNode.text) }}
       />
+      </>
     );
   }
 
@@ -35,7 +42,7 @@ export const ContractNodeRenderer: React.FC<ContractNodeRendererProps> = ({ node
     return (
       <div className="my-4">
         {blockNode.children.map((child, index) => (
-          <ContractNodeRenderer key={index} node={child} />
+          <ContractNodeRenderer key={index} node={child} clauseIndicator={clauseIndicator} />
         ))}
       </div>
     );
@@ -47,9 +54,14 @@ export const ContractNodeRenderer: React.FC<ContractNodeRendererProps> = ({ node
     if (!headingNode.children) return null;
     return (
       <Tag className="font-bold my-4">
-        {headingNode.children.map((child, index) => (
-          <ContractNodeRenderer key={index} node={child} />
-        ))}
+        {
+          headingNode.children.map((child, index) => {
+            const clausePassThrough = clauseIndicator && index === 0 ? clauseIndicator : undefined;
+            return (
+              <ContractNodeRenderer key={index} node={child} clauseIndicator={clausePassThrough} />
+            )
+          })
+        }
       </Tag>
     );
   }
@@ -59,9 +71,12 @@ export const ContractNodeRenderer: React.FC<ContractNodeRendererProps> = ({ node
     if (!paragraphNode.children) return null;
     return (
       <p className="my-2">
-        {paragraphNode.children.map((child, index) => (
-          <ContractNodeRenderer key={index} node={child} />
-        ))}
+        {paragraphNode.children.map((child, index) => {
+          const clausePassThrough = clauseIndicator && index === 0 ? clauseIndicator : undefined;
+          return (
+            <ContractNodeRenderer key={index} node={child} clauseIndicator={clausePassThrough} />
+          )
+        })}
       </p>
     );
   }
